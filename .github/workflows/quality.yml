@@ -1,0 +1,41 @@
+# Runs tools/critic.py against a production build on every pull request
+# (and on demand). Fails the check if any category drops below 10/10.
+# Screenshots + JSON report are attached to the run as an artifact.
+name: Quality (critic)
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  critic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Serve the build
+        run: |
+          npx vite preview --port 8000 --strictPort &
+          for i in $(seq 1 30); do curl -sf http://localhost:8000/ > /dev/null && break; sleep 1; done
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install critic dependencies
+        run: |
+          pip install playwright pillow numpy
+          python -m playwright install --with-deps chromium
+      - name: Run critic
+        run: python tools/critic.py --url http://localhost:8000/ --offline --shots critic-shots --json critic.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: critic-report
+          path: |
+            critic.json
+            critic-shots/

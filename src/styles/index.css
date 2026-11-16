@@ -1,0 +1,251 @@
+/* ==========================================================================
+   PKS.OS — Tailwind CSS v4 entry
+   1. @theme          design tokens → utilities (bg-ink-0, text-fg-2, font-crt …)
+   2. @theme inline   theme-switchable roles (primary/secondary/highlight)
+   3. :root / themes  the actual role values (terminal `theme` command swaps them)
+   4. @utility        small custom utilities (shell container)
+   5. @layer components  retro chrome that utilities can't express cleanly
+                         (double-rule title bars, ASCII banners, CRT, reveals)
+   Layout, spacing and typography live as utilities in the JSX.
+   ========================================================================== */
+@import "tailwindcss";
+
+@theme {
+  /* palette is intentionally closed: no default colours → no green, ever */
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-ink-0: #070710;
+  --color-ink-1: #0b0b16;
+  --color-ink-2: #11111f;
+  --color-violet: #8b5cf6;
+  --color-violet-soft: #a78bfa;
+  --color-violet-fill: #7c3aed;
+  --color-cyan: #67e8f9;
+  --color-coral: #fb7185;
+  --color-coral-soft: #fecdd3;
+  --color-fg: #f4f1ff;
+  --color-fg-2: #b3b0c6;   /* ≥ 8:1 on ink-1 */
+  --color-fg-3: #8f8ca6;   /* ≥ 5.5:1 on ink-1 */
+  --color-prose: #dcd8ec;
+
+  --font-mono: "IBM Plex Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-banner: "JetBrains Mono", "DejaVu Sans Mono", "Cascadia Mono", Consolas, ui-monospace, monospace;
+  --font-crt: "VT323", "IBM Plex Mono", ui-monospace, monospace;
+
+  --breakpoint-xs: 23.75rem;  /*  380px */
+  --breakpoint-sm: 40rem;     /*  640px */
+  --breakpoint-md: 55rem;     /*  880px  nav collapses, project cards stack */
+  --breakpoint-lg: 64rem;     /* 1024px  split layouts */
+  --breakpoint-xl: 68.75rem;  /* 1100px */
+
+  --ease-retro: cubic-bezier(.2, .8, .2, 1);
+  --animate-blink: blink 1.05s steps(1) infinite;
+  --animate-blink-slow: blink 2.4s steps(1) infinite;
+}
+
+@theme inline {
+  --color-primary: var(--primary);
+  --color-primary-text: var(--primary-text);
+  --color-primary-fill: var(--primary-fill);
+  --color-on-primary: var(--on-primary);
+  --color-secondary: var(--secondary);
+  --color-highlight: var(--highlight);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-plate: var(--plate);
+  --color-accent: var(--pc);          /* per-project accent (set inline) */
+  --color-accent-text: var(--pct);
+}
+
+:root {
+  /* raw colours (also referenced by data/portfolio.js project accents) */
+  --violet: #8b5cf6; --violet-soft: #a78bfa; --cyan: #67e8f9; --coral: #fb7185;
+  /* roles */
+  --primary: var(--violet);
+  --primary-text: var(--violet-soft);
+  --primary-fill: #7c3aed;
+  --on-primary: #ffffff;
+  --secondary: var(--cyan);
+  --highlight: var(--coral);
+  --border: rgba(139, 92, 246, .25);
+  --border-strong: rgba(139, 92, 246, .55);
+  --plate: rgba(7, 7, 16, .9);
+  --hard: 6px 6px 0 rgba(139, 92, 246, .22);
+  /* layout */
+  --nav-h: 56px;
+  --header-h: var(--nav-h);
+  /* right-hand rail for the scroll spider (content is padded so it never sits under it) */
+  --rail-w: 34px;
+  --spider-fs: 8px;
+}
+html[data-theme="ember"] {
+  --primary: var(--coral); --primary-text: var(--coral); --primary-fill: var(--coral); --on-primary: #070710;
+  --secondary: var(--violet-soft); --highlight: var(--cyan);
+  --border: rgba(251, 113, 133, .25); --border-strong: rgba(251, 113, 133, .55); --hard: 6px 6px 0 rgba(251, 113, 133, .2);
+}
+html[data-theme="glacier"] {
+  --primary: var(--cyan); --primary-text: var(--cyan); --primary-fill: var(--cyan); --on-primary: #070710;
+  --secondary: var(--violet-soft); --highlight: var(--coral);
+  --border: rgba(103, 232, 249, .22); --border-strong: rgba(103, 232, 249, .5); --hard: 6px 6px 0 rgba(103, 232, 249, .16);
+}
+
+/* hidden amber-phosphor CRT theme: Konami code or `theme amber` */
+html[data-theme="amber"] {
+  --primary: #f59e0b; --primary-text: #fbbf24; --primary-fill: #fbbf24; --on-primary: #070710;
+  --secondary: #fcd34d; --highlight: #fb7185;
+  --border: rgba(245, 158, 11, .25); --border-strong: rgba(245, 158, 11, .55); --hard: 6px 6px 0 rgba(245, 158, 11, .2);
+}
+@media (width >= 40rem) { :root { --rail-w: 46px; --spider-fs: 12px; } }
+
+@utility shell {
+  width: min(1240px, 100% - 2 * clamp(16px, 4vw, 48px));
+  margin-inline: auto;
+}
+
+/* ==========================================================================
+   BASE
+   ========================================================================== */
+@layer base {
+  html { -webkit-text-size-adjust: 100%; scroll-behavior: auto; }
+  body { @apply m-0 overflow-x-hidden bg-ink-0 font-mono text-[15px] leading-[1.65] text-fg antialiased; padding-right: var(--rail-w); }
+  ::selection { @apply bg-secondary text-ink-0; }
+  :focus-visible { outline: 2px solid var(--secondary); outline-offset: 3px; }
+  button { cursor: pointer; }
+  kbd { @apply border border-line-strong bg-ink-1 px-1.5 font-mono text-[.85em] text-fg; }
+}
+
+/* ==========================================================================
+   COMPONENTS — retro chrome
+   ========================================================================== */
+@layer components {
+  /* --- windows ----------------------------------------------------------- */
+  .window {
+    position: relative;
+    background: var(--color-ink-1);
+    border: 1px solid var(--border-strong);
+    box-shadow: 0 0 0 3px var(--color-ink-0), 0 0 0 4px rgba(139, 92, 246, .3), 10px 10px 0 4px rgba(139, 92, 246, .1);
+  }
+  /* title bar with a double horizontal rule behind the title: [■] ═══ title ═══ meta */
+  .window-bar {
+    @apply flex min-h-9 items-center gap-2.5 border-b border-line px-3 py-[7px] text-xs text-fg-2;
+    background: linear-gradient(transparent calc(50% - 3px), var(--border-strong) calc(50% - 3px), var(--border-strong) calc(50% - 2px), transparent calc(50% - 2px), transparent calc(50% + 2px), var(--border-strong) calc(50% + 2px), var(--border-strong) calc(50% + 3px), transparent calc(50% + 3px));
+  }
+  .wb-chip { @apply flex-none whitespace-nowrap bg-ink-1 px-1; }
+  .window-title { @apply flex min-w-0 flex-1 justify-center; }
+  .window-title > span { @apply max-w-full truncate bg-ink-1 px-2.5 text-fg; }
+
+  /* --- buttons ------------------------------------------------------------- */
+  .btn {
+    @apply inline-flex items-center justify-center border px-[18px] py-[11px] text-[13px] font-semibold tracking-[.08em];
+    transition: transform .12s steps(2), box-shadow .12s steps(2), background-color .12s, color .12s;
+  }
+  .btn:hover { background: var(--secondary); border-color: var(--secondary); color: var(--color-ink-0); transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--primary); }
+  .btn:active { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--primary); }
+  .btn:disabled { @apply pointer-events-none opacity-60; }
+  .btn-primary { background: var(--primary-fill); border-color: var(--primary-fill); color: var(--on-primary); box-shadow: 4px 4px 0 var(--secondary); }
+  .btn-ghost { @apply border-primary bg-ink-1 text-fg; box-shadow: 4px 4px 0 var(--border-strong); }
+
+  /* --- 3D block-letter banners (font-size fitted by <AsciiBanner/>) ------- */
+  .ascii-banner {
+    @apply m-0 w-max max-w-none whitespace-pre font-banner text-xs leading-[1.02] tracking-normal;
+    font-variant-ligatures: none;
+    text-shadow: -1px 0 rgba(251, 113, 133, .35), 1px 0 rgba(103, 232, 249, .35), 0 0 12px rgba(139, 92, 246, .45);
+  }
+  .ascii-banner .f { color: var(--color-fg); }
+  .ascii-banner .s { color: var(--primary); }
+  .banner-b .f { color: var(--secondary); }
+
+  /* --- 3D stage: empty frame with corner brackets ------------------------- */
+  .stage3d {
+    --c: rgba(103, 232, 249, .75);
+    position: relative;
+    background:
+      linear-gradient(var(--c), var(--c)) top left / 18px 2px no-repeat, linear-gradient(var(--c), var(--c)) top left / 2px 18px no-repeat,
+      linear-gradient(var(--c), var(--c)) top right / 18px 2px no-repeat, linear-gradient(var(--c), var(--c)) top right / 2px 18px no-repeat,
+      linear-gradient(var(--c), var(--c)) bottom left / 18px 2px no-repeat, linear-gradient(var(--c), var(--c)) bottom left / 2px 18px no-repeat,
+      linear-gradient(var(--c), var(--c)) bottom right / 18px 2px no-repeat, linear-gradient(var(--c), var(--c)) bottom right / 2px 18px no-repeat;
+  }
+
+  /* --- caret, tree, project card --------------------------------------------- */
+  .caret { @apply ml-1 inline-block h-[1.05em] w-[.6em] animate-blink bg-highlight align-[-.15em]; }
+
+  .tree li { @apply relative pl-[2.4em] leading-[1.75] text-[#e3dff2] hover:text-secondary; }
+  .tree li::before { content: "├──"; @apply absolute left-0 text-fg-3; }
+  .tree li:last-child::before { content: "└──"; }
+
+  .project-card { transform: rotateX(var(--ry, 0deg)) rotateY(var(--rx, 0deg)); transition: transform .45s var(--ease-retro), border-color .2s, box-shadow .2s; }
+  .project-card.tilting { transition: transform .1s linear, border-color .2s, box-shadow .2s; }
+  .project.active .project-card, .project-card:hover, .project-card:focus-within {
+    border-color: var(--pc);
+    box-shadow: 0 0 0 3px var(--color-ink-0), 0 0 0 4px var(--pc), 12px 12px 0 4px color-mix(in srgb, var(--pc) 22%, transparent);
+  }
+  .skill-card { transition: transform .15s steps(2), box-shadow .15s steps(2), border-color .15s; }
+  .skill-card:hover, .skill-card:focus-visible { transform: translate(-3px, -3px); border-color: var(--secondary); box-shadow: 0 0 0 3px var(--color-ink-0), 0 0 0 4px var(--secondary), 9px 9px 0 4px rgba(103, 232, 249, .16); }
+  @media (hover: none) { .skill-card:hover { transform: none; } }
+
+  /* workflow connector line */
+  .wf-step:not(:last-child)::after { content: ""; @apply absolute left-[1.55em] top-[1.9em] bottom-0.5 border-l border-dashed border-fg-3; }
+  .wf-step.current h3::after { content: " ◄ running"; @apply text-[11px] tracking-[.1em] text-fg-2; }
+
+  /* --- scroll spider ------------------------------------------------------- */
+  .spider-sway { transform-origin: 50% -14px; animation: sway 3.2s ease-in-out infinite; }
+  .spider-eye { text-shadow: 0 0 6px var(--highlight); }
+  .fly-buzz { animation: buzz .35s steps(2) infinite; }
+
+  /* --- CRT overlays + cursor ---------------------------------------------- */
+  .fx { @apply pointer-events-none fixed inset-0 z-90; }
+  .fx-scan { background: repeating-linear-gradient(180deg, rgba(255, 255, 255, .025) 0 1px, transparent 1px 3px); animation: flicker 11s steps(1) infinite; }
+  .fx-vignette { background: radial-gradient(ellipse at 50% 50%, transparent 60%, rgba(0, 0, 0, .55) 100%); }
+  .fx-warp { opacity: 0; background: linear-gradient(180deg, transparent 0%, rgba(139, 92, 246, .12) 46%, rgba(103, 232, 249, .18) 50%, rgba(251, 113, 133, .1) 54%, transparent 100%); background-size: 100% 300%; }
+  .fx-warp.run { animation: warp .6s cubic-bezier(.65, 0, .35, 1); }
+
+  .cursor-dot, .cursor-box { @apply pointer-events-none fixed left-0 top-0 z-260 hidden will-change-transform; }
+  .has-cursor .cursor-dot, .has-cursor .cursor-box { display: block; }
+  .has-cursor, .has-cursor a, .has-cursor button { cursor: none; }
+  .has-cursor input, .has-cursor textarea { cursor: text; }
+  .cursor-dot { @apply -ml-[3px] -mt-[3px] size-1.5 bg-fg; }
+  .cursor-box { @apply -ml-3.5 -mt-3.5 size-7 border border-secondary; transition: width .2s, height .2s, margin .2s, border-color .2s; }
+  .cursor-box.hover { @apply -ml-[22px] -mt-[22px] size-11 border-highlight; }
+  .cursor-dot.hidden, .cursor-box.hidden { opacity: 0; }
+
+  /* --- scroll reveals: retro "print" + "CRT power-on" ---------------------- */
+  .js [data-reveal="print"] { clip-path: inset(0 0 100% 0); transition: clip-path .6s steps(8, end); }
+  .js [data-reveal="crt"] { transform: scaleY(.02); opacity: 0; filter: brightness(2.4); transition: transform .42s cubic-bezier(.2, .9, .25, 1), opacity .12s, filter .6s; }
+  .js [data-reveal="card"] { opacity: 0; transform: translateY(18px); transition: opacity .35s steps(4), transform .5s var(--ease-retro); }
+  .js [data-reveal].in { clip-path: inset(-20px -20px -20px -20px); transform: none; opacity: 1; filter: none; }
+
+  /* hero entrance */
+  .js .hero [data-stage] { opacity: 0; transition: opacity .25s steps(3); }
+  .js .hero [data-stage].on { opacity: 1; }
+  .js .hero .hero-name[data-stage] .ascii-banner { clip-path: inset(0 0 100% 0); transition: clip-path .5s steps(6); }
+  .js .hero .hero-name[data-stage].on .ascii-banner { clip-path: inset(0 0 -10% 0); }
+  .js .hero .hero-name[data-stage].on > :nth-child(2) .ascii-banner { transition-delay: .25s; }
+
+  /* terminal output colours */
+  .t-echo, .t-strong { color: var(--color-fg); } .t-strong { font-weight: 600; }
+  .t-dim { color: var(--color-fg-2); } .t-acc { color: var(--secondary); } .t-hi, .t-err { color: var(--highlight); } .t-vi { color: var(--color-violet-soft); }
+}
+
+/* ==========================================================================
+   KEYFRAMES, DETERMINISTIC MODE, REDUCED MOTION
+   ========================================================================== */
+@keyframes blink { 50% { opacity: 0; } }
+@keyframes sway { 0%, 100% { rotate: -4deg; } 50% { rotate: 4deg; } }
+@keyframes buzz { 0% { translate: -1px 0; } 50% { translate: 1px -1px; } 100% { translate: -1px 0; } }
+@keyframes flicker { 0%, 100% { opacity: 1; } 63% { opacity: .6; } 63.5% { opacity: 1; } }
+@keyframes warp { 0% { opacity: 0; background-position: 0 100%; } 30% { opacity: 1; } 100% { opacity: 0; background-position: 0 -100%; } }
+
+/* ?critic in the URL → no transitions (used by tools/critic.py) */
+html.critic *, html.critic *::before, html.critic *::after { transition: none !important; animation: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+  .caret { animation: none !important; opacity: 1; }
+  .project-card { transform: none !important; }
+  .js [data-reveal], .js .hero [data-stage] { opacity: 1 !important; transform: none !important; filter: none !important; clip-path: none !important; }
+  .js .hero .hero-name[data-stage] .ascii-banner { clip-path: none !important; }
+}
+
+
